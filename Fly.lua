@@ -1,12 +1,13 @@
--- SMX FLY HUB V1 (DONMA SORUNU GİDERİLDİ)
+-- SMX FLY HUB V1 (DÜŞME SORUNU ÇÖZÜLDÜ)
 local lp = game.Players.LocalPlayer
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 local runService = game:GetService("RunService")
 
 local flying = false
 local speedLevel = 1
-local speeds = {20, 35, 55, 80, 110, 145, 185, 230, 280, 350}
+local speeds = {25, 40, 60, 85, 115, 150, 190, 240, 300, 400}
 
+-- ANA PANEL
 local MainFrame = Instance.new("Frame", ScreenGui)
 local Gradient = Instance.new("UIGradient", MainFrame)
 local Stroke = Instance.new("UIStroke", MainFrame)
@@ -17,7 +18,6 @@ MainFrame.Position = UDim2.new(0.5, -100, 0.4, 0)
 MainFrame.BackgroundColor3 = Color3.new(1, 1, 1)
 MainFrame.Active = true
 MainFrame.Draggable = true
-
 Corner.CornerRadius = UDim.new(0, 15)
 Stroke.Thickness = 3
 Stroke.ApplyStrokeMode = "Border"
@@ -27,74 +27,71 @@ Gradient.Color = ColorSequence.new{
     ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0))
 }
 
+-- AÇMA BUTONU
 local OpenBtn = Instance.new("TextButton", ScreenGui)
 local OpenCorner = Instance.new("UICorner", OpenBtn)
 local OpenStroke = Instance.new("UIStroke", OpenBtn)
 local OpenGradient = Instance.new("UIGradient", OpenBtn)
-
 OpenBtn.Size = UDim2.new(0, 60, 0, 35)
 OpenBtn.Position = UDim2.new(0, 10, 0.5, 0)
-OpenBtn.Text = "AÇ"
-OpenBtn.TextColor3 = Color3.new(1, 1, 1)
-OpenBtn.Font = "GothamBold"
-OpenBtn.BackgroundColor3 = Color3.new(1, 1, 1)
-OpenBtn.Visible = false
-OpenCorner.CornerRadius = UDim.new(0, 10)
-OpenStroke.Thickness = 2
-OpenGradient.Color = Gradient.Color
+OpenBtn.Text = "AÇ"; OpenBtn.TextColor3 = Color3.new(1, 1, 1); OpenBtn.Font = "GothamBold"; OpenBtn.BackgroundColor3 = Color3.new(1, 1, 1); OpenBtn.Visible = false
+OpenCorner.CornerRadius = UDim.new(0, 10); OpenStroke.Thickness = 2; OpenGradient.Color = Gradient.Color
 
+-- FLY SİSTEMİ
 local function startFly()
     local char = lp.Character or lp.CharacterAdded:Wait()
     local hrp = char:WaitForChild("HumanoidRootPart")
+    local hum = char:WaitForChild("Humanoid")
     
+    -- Eski objeleri temizle (Garanti olsun)
+    for _, v in pairs(hrp:GetChildren()) do
+        if v:IsA("BodyVelocity") or v:IsA("BodyGyro") then v:Destroy() end
+    end
+
     local bv = Instance.new("BodyVelocity", hrp)
-    local bg = Instance.new("BodyGyro", hrp)
     bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-    bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+    bv.Velocity = Vector3.new(0, 0, 0)
     
+    local bg = Instance.new("BodyGyro", hrp)
+    bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+    bg.CFrame = hrp.CFrame
+
     task.spawn(function()
-        while flying do
+        while flying and char.Parent and hum.Health > 0 do
             runService.RenderStepped:Wait()
-            if char:FindFirstChild("Humanoid") and hrp then
-                char.Humanoid.PlatformStand = true
-                local cam = workspace.CurrentCamera
-                local moveDir = char.Humanoid.MoveDirection
-                
-                -- HAREKET SİSTEMİ (STABİLİZE EDİLDİ)
-                if moveDir.Magnitude > 0 then
-                    bv.Velocity = cam.CFrame.LookVector * (speeds[speedLevel])
-                else
-                    bv.Velocity = Vector3.new(0, 0.1, 0) -- Çok hafif yukarı itiş (donmayı engeller)
-                end
-                bg.CFrame = cam.CFrame
+            hum.PlatformStand = true
+            local cam = workspace.CurrentCamera
+            
+            local moveDir = hum.MoveDirection
+            if moveDir.Magnitude > 0 then
+                -- Joystick + Kamera uyumlu Özgür İrade uçuşu
+                local flyVec = (moveDir * speeds[speedLevel]) + (cam.CFrame.LookVector * (moveDir.Magnitude * speeds[speedLevel] * (cam.CFrame.LookVector.Y)))
+                bv.Velocity = Vector3.new(flyVec.X, flyVec.Y, flyVec.Z)
             else
-                break
+                bv.Velocity = Vector3.new(0, 0, 0)
             end
+            
+            bg.CFrame = CFrame.new(hrp.Position, hrp.Position + cam.CFrame.LookVector * Vector3.new(1, 0, 1))
         end
-        if bv then bv:Destroy() end
-        if bg then bg:Destroy() end
-        if char:FindFirstChild("Humanoid") then
-            char.Humanoid.PlatformStand = false
+        
+        -- KAPATINCA BURASI ÇALIŞIR
+        bv:Destroy()
+        bg:Destroy()
+        if hum then
+            hum.PlatformStand = false
+            hum:ChangeState(Enum.HumanoidStateType.GettingUp) -- Karakteri ayağa diker ve düşmesini sağlar
         end
     end)
 end
 
+-- MENÜ BUTONLARI
 local List = Instance.new("ScrollingFrame", MainFrame)
-List.Size = UDim2.new(1, 0, 0.75, 0)
-List.Position = UDim2.new(0, 0, 0.22, 0)
-List.BackgroundTransparency = 1
-List.ScrollBarThickness = 0
-local UIList = Instance.new("UIListLayout", List)
-UIList.HorizontalAlignment = "Center"
-UIList.Padding = UDim.new(0, 8)
+List.Size = UDim2.new(1, 0, 0.75, 0); List.Position = UDim2.new(0, 0, 0.22, 0); List.BackgroundTransparency = 1; List.ScrollBarThickness = 0
+Instance.new("UIListLayout", List).HorizontalAlignment = "Center"
 
 local function createMenuBtn(txt, func)
     local b = Instance.new("TextButton", List)
-    b.Size = UDim2.new(0.85, 0, 0, 35)
-    b.Text = txt
-    b.BackgroundColor3 = Color3.fromRGB(30,30,30)
-    b.TextColor3 = Color3.new(1,1,1)
-    b.Font = "GothamBold"
+    b.Size = UDim2.new(0.85, 0, 0, 35); b.Text = txt; b.BackgroundColor3 = Color3.fromRGB(30,30,30); b.TextColor3 = Color3.new(1,1,1); b.Font = "GothamBold"
     Instance.new("UICorner", b).CornerRadius = UDim.new(0, 10)
     b.MouseButton1Click:Connect(function() func(b) end)
     return b
@@ -102,74 +99,37 @@ end
 
 createMenuBtn("FLY: KAPALI", function(b)
     flying = not flying
-    if flying then
-        b.Text = "FLY: AKTİF"
-        b.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
-        startFly()
-    else
-        b.Text = "FLY: KAPALI"
-        b.BackgroundColor3 = Color3.fromRGB(30,30,30)
+    if flying then 
+        b.Text = "FLY: AKTİF"; b.BackgroundColor3 = Color3.fromRGB(0, 150, 0); startFly()
+    else 
+        b.Text = "FLY: KAPALI"; b.BackgroundColor3 = Color3.fromRGB(30,30,30) 
     end
 end)
 
 local SpeedFrame = Instance.new("Frame", List)
-SpeedFrame.Size = UDim2.new(0.85, 0, 0, 40)
-SpeedFrame.BackgroundTransparency = 1
+SpeedFrame.Size = UDim2.new(0.85, 0, 0, 40); SpeedFrame.BackgroundTransparency = 1
+local sLabel = Instance.new("TextLabel", SpeedFrame)
+sLabel.Size = UDim2.new(0.4, 0, 1, 0); sLabel.Position = UDim2.new(0.3, 0, 0, 0); sLabel.Text = "HIZ: 1"; sLabel.TextColor3 = Color3.new(1,1,1); sLabel.Font = "GothamBold"; sLabel.BackgroundTransparency = 1
 
-local speedLabel = Instance.new("TextLabel", SpeedFrame)
-speedLabel.Size = UDim2.new(0.4, 0, 1, 0)
-speedLabel.Position = UDim2.new(0.3, 0, 0, 0)
-speedLabel.Text = "HIZ: " .. speedLevel
-speedLabel.TextColor3 = Color3.new(1,1,1)
-speedLabel.BackgroundTransparency = 1
-speedLabel.Font = "GothamBold"
-
-local function createAdjustBtn(txt, pos, val)
+local function adjust(t, p, v)
     local b = Instance.new("TextButton", SpeedFrame)
-    b.Size = UDim2.new(0.25, 0, 0.8, 0)
-    b.Position = pos
-    b.Text = txt
-    b.BackgroundColor3 = Color3.fromRGB(50,50,50)
-    b.TextColor3 = Color3.new(1,1,1)
+    b.Size = UDim2.new(0.25, 0, 0.8, 0); b.Position = p; b.Text = t; b.BackgroundColor3 = Color3.fromRGB(50,50,50); b.TextColor3 = Color3.new(1,1,1)
     Instance.new("UICorner", b)
-    b.MouseButton1Click:Connect(function()
-        speedLevel = math.clamp(speedLevel + val, 1, 10)
-        speedLabel.Text = "HIZ: " .. speedLevel
-    end)
+    b.MouseButton1Click:Connect(function() speedLevel = math.clamp(speedLevel + v, 1, 10); sLabel.Text = "HIZ: " .. speedLevel end)
 end
+adjust("-", UDim2.new(0,0,0.1,0), -1); adjust("+", UDim2.new(0.75,0,0.1,0), 1)
 
-createAdjustBtn("-", UDim2.new(0,0,0.1,0), -1)
-createAdjustBtn("+", UDim2.new(0.75,0,0.1,0), 1)
-
-createMenuBtn("MENÜYÜ KAPAT", function()
-    MainFrame.Visible = false
-    OpenBtn.Visible = true
-end)
-
-createMenuBtn("SCRİPTİ SİL", function()
-    ScreenGui:Destroy()
-end)
-
-OpenBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = true
-    OpenBtn.Visible = false
-end)
+createMenuBtn("MENÜYÜ KAPAT", function() MainFrame.Visible = false; OpenBtn.Visible = true end)
+createMenuBtn("SCRİPTİ SİL", function() ScreenGui:Destroy() end)
+OpenBtn.MouseButton1Click:Connect(function() MainFrame.Visible = true; OpenBtn.Visible = false end)
 
 local Title = Instance.new("TextLabel", MainFrame)
-Title.Size = UDim2.new(1, 0, 0.2, 0)
-Title.Text = "SMX FLY HUB V1"
-Title.TextColor3 = Color3.new(1, 1, 1)
-Title.BackgroundTransparency = 1
-Title.Font = "GothamBold"
-Title.TextSize = 16
+Title.Size = UDim2.new(1, 0, 0.2, 0); Title.Text = "SMX FLY HUB V1"; Title.TextColor3 = Color3.new(1, 1, 1); Title.Font = "GothamBold"; Title.BackgroundTransparency = 1
 
 task.spawn(function()
     while true do
-        Gradient.Rotation = Gradient.Rotation + 2
-        OpenGradient.Rotation = OpenGradient.Rotation + 2
+        Gradient.Rotation = Gradient.Rotation + 2; OpenGradient.Rotation = OpenGradient.Rotation + 2
         local rainbow = Color3.fromHSV(tick() % 5 / 5, 1, 1)
-        Stroke.Color = rainbow
-        OpenStroke.Color = rainbow
-        task.wait()
+        Stroke.Color = rainbow; OpenStroke.Color = rainbow; task.wait()
     end
 end)
