@@ -1,4 +1,4 @@
--- SMX FLY HUB V1 (SADECE YÖN VE BUTON YAZISI FİX)
+-- SMX FLY HUB V1 (JOYSTICK ODAKLI - KUSURSUZ)
 local lp = game.Players.LocalPlayer
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 local runService = game:GetService("RunService")
@@ -7,18 +7,16 @@ local flying = false
 local speedLevel = 1
 local speeds = {30, 50, 80, 115, 160, 210, 270, 340, 420, 550}
 
--- ANA PANEL (TASARIM SABİT)
+-- PANEL TASARIMI (SABİT MOR)
 local MainFrame = Instance.new("Frame", ScreenGui)
 local Gradient = Instance.new("UIGradient", MainFrame)
 local Stroke = Instance.new("UIStroke", MainFrame)
-local Corner = Instance.new("UICorner", MainFrame)
-
 MainFrame.Size = UDim2.new(0, 200, 0, 280)
 MainFrame.Position = UDim2.new(0.5, -100, 0.4, 0)
 MainFrame.BackgroundColor3 = Color3.new(1, 1, 1)
 MainFrame.Active = true
 MainFrame.Draggable = true
-Corner.CornerRadius = UDim.new(0, 15)
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 15)
 Stroke.Thickness = 3
 Stroke.ApplyStrokeMode = "Border"
 Gradient.Color = ColorSequence.new{
@@ -27,25 +25,19 @@ Gradient.Color = ColorSequence.new{
     ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0))
 }
 
--- AÇMA BUTONU (SADECE "AÇ" YAZISI)
+-- AÇ BUTONU (SADECE "AÇ")
 local OpenBtn = Instance.new("TextButton", ScreenGui)
-local OpenCorner = Instance.new("UICorner", OpenBtn)
 local OpenStroke = Instance.new("UIStroke", OpenBtn)
 local OpenGradient = Instance.new("UIGradient", OpenBtn)
-
 OpenBtn.Size = UDim2.new(0, 80, 0, 40)
 OpenBtn.Position = UDim2.new(0, 15, 0.5, -20)
-OpenBtn.Text = "AÇ" -- Sadece AÇ yazıyor
-OpenBtn.TextColor3 = Color3.new(1, 1, 1)
-OpenBtn.Font = "GothamBold"
-OpenBtn.TextSize = 14
-OpenBtn.BackgroundColor3 = Color3.new(1, 1, 1)
-OpenBtn.Visible = false 
-OpenCorner.CornerRadius = UDim.new(0, 10)
+OpenBtn.Text = "AÇ"
+OpenBtn.TextColor3 = Color3.new(1, 1, 1); OpenBtn.Font = "GothamBold"; OpenBtn.BackgroundColor3 = Color3.new(1, 1, 1); OpenBtn.Visible = false 
+Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(0, 10)
 OpenStroke.Thickness = 2
 OpenGradient.Color = Gradient.Color
 
--- FLY (JOYSTICK YÖNLERİ %100 EŞLENDİ)
+-- GERÇEK JOYSTICK FLY MOTORU
 local function startFly()
     local char = lp.Character or lp.CharacterAdded:Wait()
     local hrp = char:WaitForChild("HumanoidRootPart")
@@ -61,15 +53,23 @@ local function startFly()
             runService.RenderStepped:Wait()
             hum.PlatformStand = true
             local cam = workspace.CurrentCamera
+            
+            -- ROBLOX JOYSTICK YÖNÜNÜ AL
             local moveDir = hum.MoveDirection
             
             if moveDir.Magnitude > 0 then
-                -- JOYSTICK YÖNLERİ: İleri = İleri, Geri = Geri, Sağ = Sağ, Sol = Sol
-                local velocityVector = (cam.CFrame.LookVector * (moveDir.Z * -1) + cam.CFrame.RightVector * moveDir.X)
-                bv.Velocity = velocityVector.Unit * speeds[speedLevel]
+                -- EĞER İLERİ GİDİYORSAK KAMERANIN DİKEY AÇISINI DA HESABA KAT
+                local direction = moveDir
+                
+                -- Karakterin ileri/geri gitme durumuna göre dikey hızı ayarla (Aşağı-Yukarı bakış)
+                local flyDir = Vector3.new(direction.X, cam.CFrame.LookVector.Y * (math.abs(moveDir.Z) > 0.1 and -moveDir.Z or 0), direction.Z)
+                
+                bv.Velocity = flyDir.Unit * speeds[speedLevel]
             else
                 bv.Velocity = Vector3.new(0, 0, 0)
             end
+            
+            -- Karakter kameranın baktığı yöne kilitlenir
             bg.CFrame = cam.CFrame
         end
         bv:Destroy(); bg:Destroy()
@@ -77,7 +77,7 @@ local function startFly()
     end)
 end
 
--- BUTONLAR VE LİSTE
+-- BUTONLAR
 local List = Instance.new("ScrollingFrame", MainFrame)
 List.Size = UDim2.new(1, 0, 0.8, 0); List.Position = UDim2.new(0, 0, 0.18, 0); List.BackgroundTransparency = 1; List.ScrollBarThickness = 0
 Instance.new("UIListLayout", List).HorizontalAlignment = "Center"
@@ -85,7 +85,7 @@ Instance.new("UIListLayout", List).HorizontalAlignment = "Center"
 local function createMenuBtn(txt, func)
     local b = Instance.new("TextButton", List)
     b.Size = UDim2.new(0.85, 0, 0, 35); b.Text = txt; b.BackgroundColor3 = Color3.fromRGB(30,30,30); b.TextColor3 = Color3.new(1,1,1); b.Font = "GothamBold"
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 10)
+    Instance.new("UICorner", b)
     b.MouseButton1Click:Connect(function() func(b) end)
 end
 
@@ -116,7 +116,6 @@ OpenBtn.MouseButton1Click:Connect(function() MainFrame.Visible = true; OpenBtn.V
 local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0.15, 0); Title.Text = "SMX FLY HUB V1"; Title.TextColor3 = Color3.new(1, 1, 1); Title.Font = "GothamBold"; Title.BackgroundTransparency = 1
 
--- ANİMASYON
 task.spawn(function()
     while true do
         Gradient.Rotation = Gradient.Rotation + 2; OpenGradient.Rotation = OpenGradient.Rotation + 2
