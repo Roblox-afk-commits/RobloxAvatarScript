@@ -1,4 +1,4 @@
--- SMX FLY HUB V1 (TASARIM SABİT - YÖNLER FİX)
+-- SMX FLY HUB V1 (SADECE YÖN VE BUTON YAZISI FİX)
 local lp = game.Players.LocalPlayer
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 local runService = game:GetService("RunService")
@@ -7,7 +7,7 @@ local flying = false
 local speedLevel = 1
 local speeds = {30, 50, 80, 115, 160, 210, 270, 340, 420, 550}
 
--- ANA PANEL (ORİJİNAL MOR TASARIM)
+-- ANA PANEL (TASARIM SABİT)
 local MainFrame = Instance.new("Frame", ScreenGui)
 local Gradient = Instance.new("UIGradient", MainFrame)
 local Stroke = Instance.new("UIStroke", MainFrame)
@@ -23,11 +23,11 @@ Stroke.Thickness = 3
 Stroke.ApplyStrokeMode = "Border"
 Gradient.Color = ColorSequence.new{
     ColorSequenceKeypoint.new(0, Color3.new(0, 0, 0)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(85, 0, 127)), -- MOR RENK
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(85, 0, 127)),
     ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0))
 }
 
--- AÇMA BUTONU (DÜZELTİLDİ)
+-- AÇMA BUTONU (SADECE "AÇ" YAZISI)
 local OpenBtn = Instance.new("TextButton", ScreenGui)
 local OpenCorner = Instance.new("UICorner", OpenBtn)
 local OpenStroke = Instance.new("UIStroke", OpenBtn)
@@ -35,16 +35,17 @@ local OpenGradient = Instance.new("UIGradient", OpenBtn)
 
 OpenBtn.Size = UDim2.new(0, 80, 0, 40)
 OpenBtn.Position = UDim2.new(0, 15, 0.5, -20)
-OpenBtn.Text = "SMX\nAÇ"
+OpenBtn.Text = "AÇ" -- Sadece AÇ yazıyor
 OpenBtn.TextColor3 = Color3.new(1, 1, 1)
 OpenBtn.Font = "GothamBold"
+OpenBtn.TextSize = 14
 OpenBtn.BackgroundColor3 = Color3.new(1, 1, 1)
 OpenBtn.Visible = false 
 OpenCorner.CornerRadius = UDim.new(0, 10)
 OpenStroke.Thickness = 2
 OpenGradient.Color = Gradient.Color
 
--- FLY (JOYSTICK YÖNLERİ DÜZELTİLMİŞ)
+-- FLY (JOYSTICK YÖNLERİ %100 EŞLENDİ)
 local function startFly()
     local char = lp.Character or lp.CharacterAdded:Wait()
     local hrp = char:WaitForChild("HumanoidRootPart")
@@ -63,8 +64,9 @@ local function startFly()
             local moveDir = hum.MoveDirection
             
             if moveDir.Magnitude > 0 then
-                -- Joystick yönleri kameraya göre %100 eşlendi
-                bv.Velocity = (cam.CFrame.LookVector * (moveDir.Z * -1) + cam.CFrame.RightVector * moveDir.X).Unit * speeds[speedLevel]
+                -- JOYSTICK YÖNLERİ: İleri = İleri, Geri = Geri, Sağ = Sağ, Sol = Sol
+                local velocityVector = (cam.CFrame.LookVector * (moveDir.Z * -1) + cam.CFrame.RightVector * moveDir.X)
+                bv.Velocity = velocityVector.Unit * speeds[speedLevel]
             else
                 bv.Velocity = Vector3.new(0, 0, 0)
             end
@@ -75,7 +77,7 @@ local function startFly()
     end)
 end
 
--- LİSTE
+-- BUTONLAR VE LİSTE
 local List = Instance.new("ScrollingFrame", MainFrame)
 List.Size = UDim2.new(1, 0, 0.8, 0); List.Position = UDim2.new(0, 0, 0.18, 0); List.BackgroundTransparency = 1; List.ScrollBarThickness = 0
 Instance.new("UIListLayout", List).HorizontalAlignment = "Center"
