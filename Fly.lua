@@ -1,4 +1,4 @@
--- SMX FLY HUB V1 (DİKEY KONTROL %100 FİX)
+-- SMX FLY HUB V1 (BASİT VE SERT DÖNÜŞ - JOYSTICK ODAKLI)
 local lp = game.Players.LocalPlayer
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 local runService = game:GetService("RunService")
@@ -7,7 +7,7 @@ local flying = false
 local speedLevel = 1
 local speeds = {30, 50, 80, 115, 160, 210, 270, 340, 420, 550}
 
--- PANEL (SABİT MOR)
+-- ANA PANEL (TASARIM SABİT)
 local MainFrame = Instance.new("Frame", ScreenGui)
 local Gradient = Instance.new("UIGradient", MainFrame)
 local Stroke = Instance.new("UIStroke", MainFrame)
@@ -23,7 +23,7 @@ Gradient.Color = ColorSequence.new{
     ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0))
 }
 
--- BUTON (SADECE "AÇ")
+-- AÇ BUTONU
 local OpenBtn = Instance.new("TextButton", ScreenGui)
 local OpenStroke = Instance.new("UIStroke", OpenBtn)
 local OpenGradient = Instance.new("UIGradient", OpenBtn)
@@ -32,7 +32,7 @@ OpenBtn.Text = "AÇ"; OpenBtn.TextColor3 = Color3.new(1, 1, 1); OpenBtn.Font = "
 Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(0, 10)
 OpenStroke.Thickness = 2; OpenGradient.Color = Gradient.Color
 
--- TAM KONTROLLÜ FLY MOTORU
+-- EN BASİT VE SERT FLY MOTORU
 local function startFly()
     local char = lp.Character or lp.CharacterAdded:Wait()
     local hrp = char:WaitForChild("HumanoidRootPart")
@@ -41,7 +41,7 @@ local function startFly()
     bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
     local bg = Instance.new("BodyGyro", hrp)
     bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-    bg.P = 50000 
+    bg.P = 100000 -- Dönüş gücünü fulledim (Küt diye döner)
 
     task.spawn(function()
         while flying and char.Parent and hum.Health > 0 do
@@ -51,17 +51,20 @@ local function startFly()
             local moveDir = hum.MoveDirection
             
             if moveDir.Magnitude > 0 then
-                -- BURASI KRİTİK: Kameranın baktığı tam yöne (X, Y, Z) joystick gücü uygula
-                -- moveDir.Z -1 ise ileri gidiyoruz demektir, kameranın LookVector'ını tam kullanır
-                local forwardVel = cam.CFrame.LookVector * (moveDir.Z * -1)
-                local rightVel = cam.CFrame.RightVector * moveDir.X
+                -- EN BASİT MANTIK: Joystick nereye, itiş oraya
+                -- Kamera nereye bakıyorsa "İleri" orasıdır.
+                local direction = (cam.CFrame:VectorToWorldSpace(Vector3.new(moveDir.X, 0, moveDir.Z)).Unit)
                 
-                bv.Velocity = (forwardVel + rightVel).Unit * speeds[speedLevel]
+                -- Eğer dikey kontrol (yukarı/aşağı) isteniyorsa:
+                -- İleri-Geri joystick hareketini kameranın LookVector'ı ile çarpıyoruz
+                local look = cam.CFrame.LookVector
+                local right = cam.CFrame.RightVector
+                bv.Velocity = (look * (moveDir.Z * -1) + right * moveDir.X).Unit * speeds[speedLevel]
             else
                 bv.Velocity = Vector3.new(0, 0, 0)
             end
             
-            -- Dönüş kameraya kilitli (Sert dönüş)
+            -- Karakter kameraya kilitli kalsın ki joystick "ileri"si kameranın "ileri"si olsun
             bg.CFrame = cam.CFrame
         end
         bv:Destroy(); bg:Destroy()
@@ -69,7 +72,7 @@ local function startFly()
     end)
 end
 
--- LİSTE VE MENÜ
+-- BUTONLAR
 local List = Instance.new("ScrollingFrame", MainFrame)
 List.Size = UDim2.new(1, 0, 0.8, 0); List.Position = UDim2.new(0, 0, 0.18, 0); List.BackgroundTransparency = 1; List.ScrollBarThickness = 0
 Instance.new("UIListLayout", List).HorizontalAlignment = "Center"
@@ -87,19 +90,14 @@ createMenuBtn("FLY: KAPALI", function(b)
     else b.Text = "FLY: KAPALI"; b.BackgroundColor3 = Color3.fromRGB(30,30,30) end
 end)
 
-local SpeedFrame = Instance.new("Frame", List)
-SpeedFrame.Size = UDim2.new(0.85, 0, 0, 40); SpeedFrame.BackgroundTransparency = 1
-local sLabel = Instance.new("TextLabel", SpeedFrame)
-sLabel.Size = UDim2.new(0.4, 0, 1, 0); sLabel.Position = UDim2.new(0.3, 0, 0, 0); sLabel.Text = "HIZ: 1"; sLabel.TextColor3 = Color3.new(1,1,1); sLabel.Font = "GothamBold"; sLabel.BackgroundTransparency = 1
-
 local function adjust(t, p, v)
-    local b = Instance.new("TextButton", SpeedFrame)
-    b.Size = UDim2.new(0.25, 0, 0.8, 0); b.Position = p; b.Text = t; b.BackgroundColor3 = Color3.fromRGB(50,50,50); b.TextColor3 = Color3.new(1,1,1)
-    Instance.new("UICorner", b)
-    b.MouseButton1Click:Connect(function() speedLevel = math.clamp(speedLevel + v, 1, 10); sLabel.Text = "HIZ: " .. speedLevel end)
+    local SpeedFrame = Instance.new("Frame", List); SpeedFrame.Size = UDim2.new(0.85, 0, 0, 40); SpeedFrame.BackgroundTransparency = 1
+    local sLabel = Instance.new("TextLabel", SpeedFrame); sLabel.Size = UDim2.new(1, 0, 1, 0); sLabel.Text = "HIZ AYARI"; sLabel.TextColor3 = Color3.new(1,1,1); sLabel.Font = "GothamBold"; sLabel.BackgroundTransparency = 1
+    -- Hız butonlarını basitleştirdim
 end
-adjust("-", UDim2.new(0,0,0.1,0), -1); adjust("+", UDim2.new(0.75,0,0.1,0), 1)
 
+createMenuBtn("HIZI ARTIR (+)", function() speedLevel = math.clamp(speedLevel + 1, 1, 10) end)
+createMenuBtn("HIZI AZALT (-)", function() speedLevel = math.clamp(speedLevel - 1, 1, 10) end)
 createMenuBtn("MENÜYÜ KAPAT", function() MainFrame.Visible = false; OpenBtn.Visible = true end)
 createMenuBtn("SCRİPTİ SİL", function() ScreenGui:Destroy() end)
 
