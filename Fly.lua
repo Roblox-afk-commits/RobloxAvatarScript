@@ -1,14 +1,12 @@
--- SMX FLY HUB V1 (ÖZGÜR UÇUŞ + HIZ KONTROLÜ)
+-- SMX FLY HUB V1 (DONMA SORUNU GİDERİLDİ)
 local lp = game.Players.LocalPlayer
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 local runService = game:GetService("RunService")
 
--- DEĞİŞKENLER
 local flying = false
 local speedLevel = 1
-local speeds = {20, 35, 50, 70, 90, 110, 130, 155, 185, 220}
+local speeds = {20, 35, 55, 80, 110, 145, 185, 230, 280, 350}
 
--- ANA MENÜ TASARIMI
 local MainFrame = Instance.new("Frame", ScreenGui)
 local Gradient = Instance.new("UIGradient", MainFrame)
 local Stroke = Instance.new("UIStroke", MainFrame)
@@ -29,7 +27,6 @@ Gradient.Color = ColorSequence.new{
     ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0))
 }
 
--- YENİDEN AÇMA BUTONU
 local OpenBtn = Instance.new("TextButton", ScreenGui)
 local OpenCorner = Instance.new("UICorner", OpenBtn)
 local OpenStroke = Instance.new("UIStroke", OpenBtn)
@@ -42,12 +39,10 @@ OpenBtn.TextColor3 = Color3.new(1, 1, 1)
 OpenBtn.Font = "GothamBold"
 OpenBtn.BackgroundColor3 = Color3.new(1, 1, 1)
 OpenBtn.Visible = false
-
 OpenCorner.CornerRadius = UDim.new(0, 10)
 OpenStroke.Thickness = 2
 OpenGradient.Color = Gradient.Color
 
--- FLY SİSTEMİ (ÖZGÜR UÇUŞ)
 local function startFly()
     local char = lp.Character or lp.CharacterAdded:Wait()
     local hrp = char:WaitForChild("HumanoidRootPart")
@@ -60,18 +55,20 @@ local function startFly()
     task.spawn(function()
         while flying do
             runService.RenderStepped:Wait()
-            if char:FindFirstChild("Humanoid") then
+            if char:FindFirstChild("Humanoid") and hrp then
                 char.Humanoid.PlatformStand = true
-                local cam = workspace.CurrentCamera.CFrame
-                local moveDir = char.Humanoid.MoveDirection 
+                local cam = workspace.CurrentCamera
+                local moveDir = char.Humanoid.MoveDirection
                 
+                -- HAREKET SİSTEMİ (STABİLİZE EDİLDİ)
                 if moveDir.Magnitude > 0 then
-                    -- ÖZGÜR UÇUŞ: Kameranın baktığı yöne doğru itiş gücü verir
-                    bv.Velocity = cam.VectorToWorldSpace(Vector3.new(moveDir.X * speeds[speedLevel], (moveDir.Z * -1) * cam.LookVector.Y * speeds[speedLevel], moveDir.Z * speeds[speedLevel]))
+                    bv.Velocity = cam.CFrame.LookVector * (speeds[speedLevel])
                 else
-                    bv.Velocity = Vector3.new(0, 0, 0)
+                    bv.Velocity = Vector3.new(0, 0.1, 0) -- Çok hafif yukarı itiş (donmayı engeller)
                 end
-                bg.CFrame = cam
+                bg.CFrame = cam.CFrame
+            else
+                break
             end
         end
         if bv then bv:Destroy() end
@@ -82,7 +79,6 @@ local function startFly()
     end)
 end
 
--- MENÜ BUTONLARI YAPISI
 local List = Instance.new("ScrollingFrame", MainFrame)
 List.Size = UDim2.new(1, 0, 0.75, 0)
 List.Position = UDim2.new(0, 0, 0.22, 0)
@@ -104,7 +100,6 @@ local function createMenuBtn(txt, func)
     return b
 end
 
--- FLY AKTİF ETME
 createMenuBtn("FLY: KAPALI", function(b)
     flying = not flying
     if flying then
@@ -117,7 +112,6 @@ createMenuBtn("FLY: KAPALI", function(b)
     end
 end)
 
--- HIZ KONTROL PANELİ (+ ve -)
 local SpeedFrame = Instance.new("Frame", List)
 SpeedFrame.Size = UDim2.new(0.85, 0, 0, 40)
 SpeedFrame.BackgroundTransparency = 1
@@ -147,7 +141,6 @@ end
 createAdjustBtn("-", UDim2.new(0,0,0.1,0), -1)
 createAdjustBtn("+", UDim2.new(0.75,0,0.1,0), 1)
 
--- KAPATMA/SİLME
 createMenuBtn("MENÜYÜ KAPAT", function()
     MainFrame.Visible = false
     OpenBtn.Visible = true
@@ -162,7 +155,6 @@ OpenBtn.MouseButton1Click:Connect(function()
     OpenBtn.Visible = false
 end)
 
--- BAŞLIK
 local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0.2, 0)
 Title.Text = "SMX FLY HUB V1"
@@ -171,7 +163,6 @@ Title.BackgroundTransparency = 1
 Title.Font = "GothamBold"
 Title.TextSize = 16
 
--- Animasyon
 task.spawn(function()
     while true do
         Gradient.Rotation = Gradient.Rotation + 2
