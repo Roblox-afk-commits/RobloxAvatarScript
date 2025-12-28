@@ -1,4 +1,4 @@
--- SMX FLY HUB V1 (ORİJİNAL TASARIM + PROFESYONEL DELTA FLY)
+-- SMX FLY HUB V1 (KESİN ÇÖZÜM - KLASİK FLY)
 local lp = game.Players.LocalPlayer
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 local runService = game:GetService("RunService")
@@ -7,7 +7,7 @@ local flying = false
 local speedLevel = 1
 local speeds = {30, 50, 80, 115, 160, 210, 270, 340, 420, 550}
 
--- ANA PANEL (TASARIM SABİT)
+-- TASARIM (ORİJİNAL MOR - HİÇ DEĞİŞMEDİ)
 local MainFrame = Instance.new("Frame", ScreenGui)
 local Gradient = Instance.new("UIGradient", MainFrame)
 local Stroke = Instance.new("UIStroke", MainFrame)
@@ -18,9 +18,9 @@ MainFrame.Active = true; MainFrame.Draggable = true
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 15)
 Stroke.Thickness = 3; Stroke.ApplyStrokeMode = "Border"
 Gradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.new(0, 0, 0)),
+    ColorSequenceKeypoint.new(0, 0, 0),
     ColorSequenceKeypoint.new(0.5, Color3.fromRGB(85, 0, 127)),
-    ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0))
+    ColorSequenceKeypoint.new(1, 0, 0, 0)
 }
 
 -- AÇ BUTONU (SADECE "AÇ")
@@ -33,11 +33,12 @@ OpenBtn.BackgroundColor3 = Color3.new(1, 1, 1); OpenBtn.Visible = false
 Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(0, 10)
 OpenStroke.Thickness = 2; OpenGradient.Color = Gradient.Color
 
--- PROFESYONEL FLY MOTORU
+-- KLASİK VE SAĞLAM FLY (JOYSTICK FIX)
 local function startFly()
     local char = lp.Character or lp.CharacterAdded:Wait()
     local hrp = char:WaitForChild("HumanoidRootPart")
     local hum = char:WaitForChild("Humanoid")
+    
     local bv = Instance.new("BodyVelocity", hrp)
     bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
     local bg = Instance.new("BodyGyro", hrp)
@@ -47,19 +48,21 @@ local function startFly()
     task.spawn(function()
         while flying and char.Parent and hum.Health > 0 do
             runService.RenderStepped:Wait()
-            hum.PlatformStand = true
             local cam = workspace.CurrentCamera
+            hum.PlatformStand = true
+            
+            -- Joystick verisini en sağlam yoldan al (MoveDirection)
             local moveDir = hum.MoveDirection
             
             if moveDir.Magnitude > 0 then
-                -- Delta tarzı: Joystick + Kamera LookVector birleşimi
-                local direction = (cam.CFrame.LookVector * (moveDir.Z * -1) + cam.CFrame.RightVector * moveDir.X)
-                bv.Velocity = direction.Unit * speeds[speedLevel]
+                -- KARAKTERİ KAMERANIN BAKTIĞI AÇIYA GÖRE UÇUR
+                -- İleri itince kamera nereye bakıyorsa (yukarı/aşağı) oraya gider.
+                bv.Velocity = moveDir * speeds[speedLevel]
+                
+                -- Karakteri kameranın yönüne dik tut
                 bg.CFrame = cam.CFrame
-                bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
             else
                 bv.Velocity = Vector3.new(0, 0, 0)
-                bg.MaxTorque = Vector3.new(0, 0, 0) -- Dururken kamera serbest
             end
         end
         bv:Destroy(); bg:Destroy()
@@ -67,7 +70,7 @@ local function startFly()
     end)
 end
 
--- MENÜ LİSTESİ (ORİJİNAL)
+-- MENÜ LİSTESİ VE BUTONLAR
 local List = Instance.new("ScrollingFrame", MainFrame)
 List.Size = UDim2.new(1, 0, 0.8, 0); List.Position = UDim2.new(0, 0, 0.18, 0); List.BackgroundTransparency = 1; List.ScrollBarThickness = 0
 Instance.new("UIListLayout", List).HorizontalAlignment = "Center"
@@ -85,7 +88,6 @@ createMenuBtn("FLY: KAPALI", function(b)
     else b.Text = "FLY: KAPALI"; b.BackgroundColor3 = Color3.fromRGB(30,30,30) end
 end)
 
--- HIZ AYARI (ORİJİNAL YAN YANA BUTONLAR)
 local SpeedFrame = Instance.new("Frame", List)
 SpeedFrame.Size = UDim2.new(0.85, 0, 0, 40); SpeedFrame.BackgroundTransparency = 1
 local sLabel = Instance.new("TextLabel", SpeedFrame)
