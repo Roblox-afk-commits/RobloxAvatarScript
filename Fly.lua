@@ -1,4 +1,4 @@
--- SMX FLY HUB V1 (ORİJİNAL TASARIM + KESİN JOYSTICK FİX)
+-- SMX FLY HUB V1 (TAMAMEN JOYSTICK ODAKLI - KAMERADAN BAĞIMSIZ)
 local lp = game.Players.LocalPlayer
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 local runService = game:GetService("RunService")
@@ -7,7 +7,7 @@ local flying = false
 local speedLevel = 1
 local speeds = {30, 50, 80, 115, 160, 210, 270, 340, 420, 550}
 
--- TASARIM (ORİJİNAL MOR NEON - HİÇ DEĞİŞMEDİ)
+-- ORİJİNAL TASARIM (MOR NEON)
 local MainFrame = Instance.new("Frame", ScreenGui)
 local Gradient = Instance.new("UIGradient", MainFrame)
 local Stroke = Instance.new("UIStroke", MainFrame)
@@ -23,7 +23,7 @@ Gradient.Color = ColorSequence.new{
     ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0))
 }
 
--- AÇ BUTONU (SADECE "AÇ")
+-- AÇ BUTONU
 local OpenBtn = Instance.new("TextButton", ScreenGui)
 local OpenStroke = Instance.new("UIStroke", OpenBtn)
 local OpenGradient = Instance.new("UIGradient", OpenBtn)
@@ -32,7 +32,7 @@ OpenBtn.Text = "AÇ"; OpenBtn.TextColor3 = Color3.new(1, 1, 1); OpenBtn.Font = "
 Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(0, 10)
 OpenStroke.Thickness = 2; OpenGradient.Color = Gradient.Color
 
--- SADECE JOYSTICKE BAĞLI FLY
+-- SADECE JOYSTICKE BAKAN SİSTEM
 local function startFly()
     local char = lp.Character or lp.CharacterAdded:Wait()
     local hrp = char:WaitForChild("HumanoidRootPart")
@@ -47,24 +47,26 @@ local function startFly()
         while flying and char.Parent and hum.Health > 0 do
             runService.RenderStepped:Wait()
             hum.PlatformStand = true
-            local cam = workspace.CurrentCamera
-            local moveDir = hum.MoveDirection -- TAMAMEN JOYSTICK YÖNÜ
+            
+            -- Kamera bilgisini değil, SADECE karakterin joystick/hareket yönünü al
+            local moveDir = hum.MoveDirection 
             
             if moveDir.Magnitude > 0 then
-                -- Joystick nereye, karakter oraya (Yukarı/Aşağı dahil)
-                local direction = (cam.CFrame.LookVector * (moveDir.Z * -1) + cam.CFrame.RightVector * moveDir.X)
-                bv.Velocity = direction.Unit * speeds[speedLevel]
+                -- Joystick nereye itilirse (Kuzey, Güney, Doğu, Batı) karakter oraya uçar
+                bv.Velocity = moveDir * speeds[speedLevel]
+                
+                -- Karakter gittiği yöne doğru "sert" bir şekilde döner
+                bg.CFrame = CFrame.new(hrp.Position, hrp.Position + moveDir)
             else
                 bv.Velocity = Vector3.new(0, 0, 0)
             end
-            bg.CFrame = cam.CFrame
         end
         bv:Destroy(); bg:Destroy()
         if hum then hum.PlatformStand = false; hum:ChangeState(11) end
     end)
 end
 
--- MENÜ LİSTESİ (ESKİ SİSTEM GERİ GELDİ)
+-- MENÜ LİSTESİ (ORİJİNAL)
 local List = Instance.new("ScrollingFrame", MainFrame)
 List.Size = UDim2.new(1, 0, 0.8, 0); List.Position = UDim2.new(0, 0, 0.18, 0); List.BackgroundTransparency = 1; List.ScrollBarThickness = 0
 Instance.new("UIListLayout", List).HorizontalAlignment = "Center"
@@ -82,7 +84,7 @@ createMenuBtn("FLY: KAPALI", function(b)
     else b.Text = "FLY: KAPALI"; b.BackgroundColor3 = Color3.fromRGB(30,30,30) end
 end)
 
--- HIZ AYARI (YAN YANA BUTONLAR GERİ GELDİ)
+-- HIZ AYARI (ORİJİNAL TASARIM)
 local SpeedFrame = Instance.new("Frame", List)
 SpeedFrame.Size = UDim2.new(0.85, 0, 0, 40); SpeedFrame.BackgroundTransparency = 1
 local sLabel = Instance.new("TextLabel", SpeedFrame)
