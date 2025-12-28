@@ -1,114 +1,72 @@
--- DELTA SÜPER AVATAR MENÜSÜ
+-- GARANTILI BROOKHAVEN AVATAR MENU
 local ScreenGui = Instance.new("ScreenGui")
 local MainFrame = Instance.new("Frame")
 local ScrollingFrame = Instance.new("ScrollingFrame")
 local UIListLayout = Instance.new("UIListLayout")
 
--- GUI ANA AYARLAR
+-- PANEL AYARLARI
 ScreenGui.Parent = game.CoreGui
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MainFrame.Position = UDim2.new(0.3, 0, 0.2, 0)
-MainFrame.Size = UDim2.new(0, 250, 0, 350)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.Position = UDim2.new(0.5, -100, 0.5, -150) -- Ekranın tam ortasında açılır
+MainFrame.Size = UDim2.new(0, 220, 0, 300)
 MainFrame.Active = true
 MainFrame.Draggable = true
 
 ScrollingFrame.Parent = MainFrame
-ScrollingFrame.Size = UDim2.new(1, 0, 0.9, 0)
-ScrollingFrame.Position = UDim2.new(0, 0, 0.1, 0)
-ScrollingFrame.CanvasSize = UDim2.new(0, 0, 2, 0)
+ScrollingFrame.Size = UDim2.new(1, 0, 1, 0)
+ScrollingFrame.BackgroundTransparency = 1
+ScrollingFrame.CanvasSize = UDim2.new(0, 0, 1.2, 0)
 ScrollingFrame.ScrollBarThickness = 5
 
 UIListLayout.Parent = ScrollingFrame
 UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-UIListLayout.Padding = Vector2.new(0, 10)
+UIListLayout.Padding = UDim.new(0, 5) -- Butonlar arası boşluk
 
--- BUTON OLUŞTURMA FONKSİYONU
-local function createBtn(name, color, callback)
+-- GARANTILI BUTON EKLEME FONKSIYONU
+local function AddButton(text, color, func)
     local btn = Instance.new("TextButton")
     btn.Parent = ScrollingFrame
-    btn.Size = UDim2.new(0.9, 0, 0, 40)
-    btn.Text = name
+    btn.Text = text
+    btn.Size = UDim2.new(0.9, 0, 0, 40) -- Butonlar daha belirgin
     btn.BackgroundColor3 = color
     btn.TextColor3 = Color3.new(1, 1, 1)
     btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 18
-    btn.MouseButton1Click:Connect(callback)
+    btn.TextSize = 16
+    btn.ZIndex = 5 -- En üstte görünmesi için
+    btn.MouseButton1Click:Connect(func)
 end
 
 local lp = game.Players.LocalPlayer
 
--- 1. HEADLESS
-createBtn("HEADLESS (BAŞSIZ)", Color3.fromRGB(50, 50, 50), function()
-    local char = lp.Character
-    if char:FindFirstChild("Head") then
-        char.Head.Transparency = 1
-        if char.Head:FindFirstChild("face") then char.Head.face.Transparency = 1 end
+-- BUTONLARI SIRAYLA EKLİYORUZ
+AddButton("HEADLESS (BAŞSIZ)", Color3.fromRGB(50, 50, 50), function()
+    if lp.Character:FindFirstChild("Head") then
+        lp.Character.Head.Transparency = 1
+        if lp.Character.Head:FindFirstChild("face") then lp.Character.Head.face.Transparency = 1 end
     end
 end)
 
--- 2. KORBLOX (Sağ Bacak)
-createBtn("KORBLOX", Color3.fromRGB(0, 102, 204), function()
-    local char = lp.Character
+AddButton("KORBLOX (SAĞ BACAK)", Color3.fromRGB(0, 120, 255), function()
+    local c = lp.Character
     local p = {"RightLowerLeg", "RightUpperLeg", "RightFoot"}
-    for _, v in pairs(p) do if char:FindFirstChild(v) then char[v]:Destroy() end end
+    for _, v in pairs(p) do if c:FindFirstChild(v) then c[v]:Destroy() end end
 end)
 
--- 3. İNCE BEL
-createBtn("İNCE BEL", Color3.fromRGB(255, 105, 180), function()
+AddButton("ZOMBIE SOL BACAK", Color3.fromRGB(60, 120, 60), function()
+    local c = lp.Character
+    local p = {"LeftLowerLeg", "LeftUpperLeg", "LeftFoot"}
+    for _, v in pairs(p) do if c:FindFirstChild(v) then c[v]:Destroy() end end
+end)
+
+AddButton("İNCE BEL / VÜCUT", Color3.fromRGB(200, 80, 150), function()
     local hum = lp.Character:FindFirstChildOfClass("Humanoid")
     if hum then
-        hum:FindFirstChild("BodyWidthScale").Value = 0.8
-        hum:FindFirstChild("BodyDepthScale").Value = 0.8
+        if hum:FindFirstChild("BodyWidthScale") then hum.BodyWidthScale.Value = 0.6 end
+        if hum:FindFirstChild("BodyDepthScale") then hum.BodyDepthScale.Value = 0.7 end
     end
 end)
 
--- 4. KASLI VÜCUT
-createBtn("KASLI VÜCUT", Color3.fromRGB(139, 69, 19), function()
-    local hum = lp.Character:FindFirstChildOfClass("Humanoid")
-    if hum then
-        hum:FindFirstChild("BodyProportionsScale").Value = 1
-        hum:FindFirstChild("BodyTypeScale").Value = 1
-        hum:FindFirstChild("BodyWidthScale").Value = 1.2
-    end
-end)
-
--- 5. İNCE VÜCUT (Thin)
-createBtn("İNCE VÜCUT", Color3.fromRGB(200, 200, 200), function()
-    local hum = lp.Character:FindFirstChildOfClass("Humanoid")
-    if hum then
-        hum:FindFirstChild("BodyWidthScale").Value = 0.5
-        hum:FindFirstChild("BodyDepthScale").Value = 0.5
-    end
-end)
-
--- 6. ZOMBIE LEFT LEG
-createBtn("ZOMBIE SOL BACAK", Color3.fromRGB(34, 139, 34), function()
-    local char = lp.Character
-    local parts = {"LeftLowerLeg", "LeftUpperLeg", "LeftFoot"}
-    for _, v in pairs(parts) do 
-        if char:FindFirstChild(v) then 
-            char[v].Transparency = 0.5 -- Hafif hayaletimsi zombi efekti
-            char[v].Color = Color3.fromRGB(100, 120, 100)
-        end 
-    end
-end)
-
--- 7. ZOMBIE RIGHT LEG
-createBtn("ZOMBIE SAĞ BACAK", Color3.fromRGB(34, 139, 34), function()
-    local char = lp.Character
-    local parts = {"RightLowerLeg", "RightUpperLeg", "RightFoot"}
-    for _, v in pairs(parts) do 
-        if char:FindFirstChild(v) then 
-            char[v].Transparency = 0.5
-            char[v].Color = Color3.fromRGB(100, 120, 100)
-        end 
-    end
-end)
-
--- KAPATMA BUTONU
-createBtn("MENÜYÜ SİL", Color3.fromRGB(150, 0, 0), function()
+AddButton("MENÜYÜ KAPAT", Color3.fromRGB(200, 0, 0), function()
     ScreenGui:Destroy()
 end)
-
-print("Delta Karakter Scripti Yüklendi!")
