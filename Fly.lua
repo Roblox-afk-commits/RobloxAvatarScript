@@ -101,4 +101,35 @@ createMenuBtn("FLY: KAPALI", function(b)
 end)
 
 local SpeedFrame = Instance.new("Frame", List)
-SpeedFrame.Size
+SpeedFrame.Size = UDim2.new(0.85, 0, 0, 40); SpeedFrame.BackgroundTransparency = 1
+local sLabel = Instance.new("TextLabel", SpeedFrame)
+sLabel.Size = UDim2.new(0.4, 0, 1, 0); sLabel.Position = UDim2.new(0.3, 0, 0, 0); sLabel.Text = "HIZ: 1"; sLabel.TextColor3 = Color3.new(1,1,1); sLabel.Font = "GothamBold"; sLabel.BackgroundTransparency = 1
+
+local function adjust(t, p, v)
+    local b = Instance.new("TextButton", SpeedFrame)
+    b.Size = UDim2.new(0.25, 0, 0.8, 0); b.Position = p; b.Text = t; b.BackgroundColor3 = Color3.fromRGB(50,50,50); b.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner", b)
+    b.MouseButton1Click:Connect(function() speedLevel = math.clamp(speedLevel + v, 1, 10); sLabel.Text = "HIZ: " .. speedLevel end)
+end
+adjust("-", UDim2.new(0,0,0.1,0), -1); adjust("+", UDim2.new(0.75,0,0.1,0), 1)
+
+createMenuBtn("MENÜYÜ KAPAT", function() MainFrame.Visible = false; OpenBtn.Visible = true end)
+createMenuBtn("SCRİPTİ SİL", function() ScreenGui:Destroy() end)
+
+OpenBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = true
+    OpenBtn.Visible = false
+end)
+
+-- BAŞLIK (İSTEDİĞİN GİBİ SMX FLY HUB V1)
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Size = UDim2.new(1, 0, 0.15, 0); Title.Text = "SMX FLY HUB V1"; Title.TextColor3 = Color3.new(1, 1, 1); Title.Font = "GothamBold"; Title.BackgroundTransparency = 1; Title.TextSize = 16
+
+-- ANİMASYONLAR
+task.spawn(function()
+    while true do
+        Gradient.Rotation = Gradient.Rotation + 2; OpenGradient.Rotation = OpenGradient.Rotation + 2
+        local rainbow = Color3.fromHSV(tick() % 5 / 5, 1, 1)
+        Stroke.Color = rainbow; OpenStroke.Color = rainbow; task.wait()
+    end
+end)
