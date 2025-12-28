@@ -1,19 +1,20 @@
--- NEON FLY PRO (MANUEL KONTROL PANELİ)
+-- SMX FLY HUB V1 (PURE JOYSTICK & CAMERA DIRECTION)
 local lp = game.Players.LocalPlayer
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+local runService = game:GetService("RunService")
 
 -- DEĞİŞKENLER
 local flying = false
-local speed = 50
-local ctrl = {f = 0, b = 0, l = 0, r = 0, u = 0, d = 0}
+local speedLevel = 1
+local speeds = {20, 45, 70, 100, 140, 190, 250, 320, 400, 600}
 
--- ANA MENÜ
+-- ANA MENÜ TASARIMI
 local MainFrame = Instance.new("Frame", ScreenGui)
 local Gradient = Instance.new("UIGradient", MainFrame)
 local Stroke = Instance.new("UIStroke", MainFrame)
 local Corner = Instance.new("UICorner", MainFrame)
 
-MainFrame.Size = UDim2.new(0, 200, 0, 260)
+MainFrame.Size = UDim2.new(0, 200, 0, 220)
 MainFrame.Position = UDim2.new(0.5, -100, 0.4, 0)
 MainFrame.BackgroundColor3 = Color3.new(1, 1, 1)
 MainFrame.Active = true
@@ -24,48 +25,15 @@ Stroke.Thickness = 3
 Stroke.ApplyStrokeMode = "Border"
 Gradient.Color = ColorSequence.new{
     ColorSequenceKeypoint.new(0, Color3.new(0, 0, 0)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(85, 0, 127)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(85, 0, 127)), -- Mor Neon
     ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0))
 }
 
--- KONTROL PANELİ (SAĞ ALT)
-local ControlFrame = Instance.new("Frame", ScreenGui)
-ControlFrame.Size = UDim2.new(0, 150, 0, 150)
-ControlFrame.Position = UDim2.new(1, -170, 1, -220)
-ControlFrame.BackgroundTransparency = 1
-ControlFrame.Visible = false
-
-local function createControlBtn(txt, pos, press, release)
-    local b = Instance.new("TextButton", ControlFrame)
-    b.Size = UDim2.new(0, 45, 0, 45)
-    b.Position = pos
-    b.Text = txt
-    b.BackgroundColor3 = Color3.new(0,0,0)
-    b.BackgroundTransparency = 0.3
-    b.TextColor3 = Color3.new(1,1,1)
-    local c = Instance.new("UICorner", b)
-    c.CornerRadius = UDim.new(1, 0)
-    local s = Instance.new("UIStroke", b)
-    s.Thickness = 2
-    s.Color = Color3.fromRGB(85, 0, 127)
-    
-    b.MouseButton1Down:Connect(press)
-    b.MouseButton1Up:Connect(release)
-    return b
-end
-
--- Butonları Yerleştir
-createControlBtn("↑", UDim2.new(0.35, 0, 0, 0), function() ctrl.f = 1 end, function() ctrl.f = 0 end)
-createControlBtn("↓", UDim2.new(0.35, 0, 0.7, 0), function() ctrl.b = -1 end, function() ctrl.b = 0 end)
-createControlBtn("←", UDim2.new(0, 0, 0.35, 0), function() ctrl.l = -1 end, function() ctrl.l = 0 end)
-createControlBtn("→", UDim2.new(0.7, 0, 0.35, 0), function() ctrl.r = 1 end, function() ctrl.r = 0 end)
-createControlBtn("▲", UDim2.new(0.8, 0, -0.3, 0), function() ctrl.u = 1 end, function() ctrl.u = 0 end)
-createControlBtn("▼", UDim2.new(0.8, 0, 1, 0), function() ctrl.d = -1 end, function() ctrl.d = 0 end)
-
--- FLY MANTIĞI
+-- FLY SİSTEMİ (KAMERA + JOYSTICK)
 local function startFly()
     local char = lp.Character or lp.CharacterAdded:Wait()
     local hrp = char:WaitForChild("HumanoidRootPart")
+    
     local bv = Instance.new("BodyVelocity", hrp)
     local bg = Instance.new("BodyGyro", hrp)
     bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
@@ -73,10 +41,19 @@ local function startFly()
     
     task.spawn(function()
         while flying do
-            task.wait()
+            runService.RenderStepped:Wait()
             char.Humanoid.PlatformStand = true
+            
             local cam = workspace.CurrentCamera.CFrame
-            bv.Velocity = (cam.LookVector * (ctrl.f + ctrl.b) + cam.RightVector * (ctrl.l + ctrl.r) + Vector3.new(0, ctrl.u + ctrl.d, 0)) * speed
+            local moveDir = char.Humanoid.MoveDirection 
+            
+            -- Bakış yönüyle joystick yönünü birleştiriyoruz
+            if moveDir.Magnitude > 0 then
+                bv.Velocity = cam.LookVector * (moveDir.Magnitude * speeds[speedLevel])
+            else
+                bv.Velocity = Vector3.new(0, 0, 0) -- Havada asılı kalma
+            end
+            
             bg.CFrame = cam
         end
         bv:Destroy()
@@ -85,44 +62,57 @@ local function startFly()
     end)
 end
 
--- Menü Butonları
+-- MENÜ BUTONLARI
 local List = Instance.new("ScrollingFrame", MainFrame)
 List.Size = UDim2.new(1, 0, 0.7, 0)
-List.Position = UDim2.new(0, 0, 0.25, 0)
+List.Position = UDim2.new(0, 0, 0.28, 0)
 List.BackgroundTransparency = 1
 List.ScrollBarThickness = 0
 local UIList = Instance.new("UIListLayout", List)
 UIList.HorizontalAlignment = "Center"
-UIList.Padding = UDim.new(0, 5)
+UIList.Padding = UDim.new(0, 10)
 
-local function createMenuBtn(txt, col, func)
+local function createMenuBtn(txt, func)
     local b = Instance.new("TextButton", List)
-    b.Size = UDim2.new(0.8, 0, 0, 35)
+    b.Size = UDim2.new(0.85, 0, 0, 40)
     b.Text = txt
-    b.BackgroundColor3 = col
+    b.BackgroundColor3 = Color3.fromRGB(30,30,30)
     b.TextColor3 = Color3.new(1,1,1)
     b.Font = "GothamBold"
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
-    b.MouseButton1Click:Connect(func)
+    b.TextSize = 14
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 10)
+    b.MouseButton1Click:Connect(function() func(b) end)
+    return b
 end
 
-createMenuBtn("FLY: KAPALI", Color3.fromRGB(40,40,40), function(self)
+createMenuBtn("FLY: KAPALI", function(b)
     flying = not flying
     if flying then
-        self.Text = "FLY: AKTİF"
-        self.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
-        ControlFrame.Visible = true
+        b.Text = "FLY: AKTİF"
+        b.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
         startFly()
     else
-        self.Text = "FLY: KAPALI"
-        self.BackgroundColor3 = Color3.fromRGB(40,40,40)
-        ControlFrame.Visible = false
+        b.Text = "FLY: KAPALI"
+        b.BackgroundColor3 = Color3.fromRGB(30,30,30)
     end
 end)
 
-createMenuBtn("HIZ (+)", Color3.fromRGB(0, 100, 200), function() speed = speed + 20 end)
-createMenuBtn("HIZ (-)", Color3.fromRGB(200, 100, 0), function() speed = speed - 20 end)
-createMenuBtn("KAPAT", Color3.fromRGB(150, 0, 0), function() ScreenGui:Destroy() end)
+local speedBtn = createMenuBtn("HIZ: Seviye 1", function(b)
+    speedLevel = speedLevel + 1
+    if speedLevel > 10 then speedLevel = 1 end
+    b.Text = "HIZ: Seviye " .. speedLevel
+end)
+
+createMenuBtn("MENÜYÜ SİL", function() ScreenGui:Destroy() end)
+
+-- BAŞLIK (SMX FLY HUB V1)
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Size = UDim2.new(1, 0, 0.25, 0)
+Title.Text = "SMX FLY HUB V1"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.BackgroundTransparency = 1
+Title.Font = "GothamBold"
+Title.TextSize = 16
 
 -- Rainbow Efekt
 task.spawn(function()
