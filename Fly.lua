@@ -1,11 +1,11 @@
--- SMX FLY HUB V1 (DÜŞME SORUNU ÇÖZÜLDÜ)
+-- SMX FLY HUB V1 (SERT KONTROL - ANLIK TEPKİ)
 local lp = game.Players.LocalPlayer
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 local runService = game:GetService("RunService")
 
 local flying = false
 local speedLevel = 1
-local speeds = {25, 40, 60, 85, 115, 150, 190, 240, 300, 400}
+local speeds = {30, 50, 80, 110, 150, 200, 260, 330, 420, 550}
 
 -- ANA PANEL
 local MainFrame = Instance.new("Frame", ScreenGui)
@@ -37,23 +37,20 @@ OpenBtn.Position = UDim2.new(0, 10, 0.5, 0)
 OpenBtn.Text = "AÇ"; OpenBtn.TextColor3 = Color3.new(1, 1, 1); OpenBtn.Font = "GothamBold"; OpenBtn.BackgroundColor3 = Color3.new(1, 1, 1); OpenBtn.Visible = false
 OpenCorner.CornerRadius = UDim.new(0, 10); OpenStroke.Thickness = 2; OpenGradient.Color = Gradient.Color
 
--- FLY SİSTEMİ
+-- ANLIK TEPKİ VEREN FLY SİSTEMİ
 local function startFly()
     local char = lp.Character or lp.CharacterAdded:Wait()
     local hrp = char:WaitForChild("HumanoidRootPart")
     local hum = char:WaitForChild("Humanoid")
     
-    -- Eski objeleri temizle (Garanti olsun)
-    for _, v in pairs(hrp:GetChildren()) do
-        if v:IsA("BodyVelocity") or v:IsA("BodyGyro") then v:Destroy() end
-    end
-
     local bv = Instance.new("BodyVelocity", hrp)
     bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
     bv.Velocity = Vector3.new(0, 0, 0)
     
     local bg = Instance.new("BodyGyro", hrp)
     bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+    bg.D = 10 -- "Soft" olmayı engellemek için sönümlemeyi düşürdük
+    bg.P = 500000 -- Tepki hızını maksimuma çıkardık
     bg.CFrame = hrp.CFrame
 
     task.spawn(function()
@@ -62,29 +59,30 @@ local function startFly()
             hum.PlatformStand = true
             local cam = workspace.CurrentCamera
             
+            -- HAREKET (Kamera nereye, karakter oraya)
             local moveDir = hum.MoveDirection
             if moveDir.Magnitude > 0 then
-                -- Joystick + Kamera uyumlu Özgür İrade uçuşu
-                local flyVec = (moveDir * speeds[speedLevel]) + (cam.CFrame.LookVector * (moveDir.Magnitude * speeds[speedLevel] * (cam.CFrame.LookVector.Y)))
-                bv.Velocity = Vector3.new(flyVec.X, flyVec.Y, flyVec.Z)
+                -- Bu kısım karakteri kameranın tam baktığı dikey açıda uçurur
+                bv.Velocity = (cam.CFrame.LookVector * (moveDir.Z * -1) + cam.CFrame.RightVector * moveDir.X).Unit * speeds[speedLevel]
             else
                 bv.Velocity = Vector3.new(0, 0, 0)
             end
             
-            bg.CFrame = CFrame.new(hrp.Position, hrp.Position + cam.CFrame.LookVector * Vector3.new(1, 0, 1))
+            -- SERT DÖNÜŞ: Karakter kameranın dikey (yukarı/aşağı) ve yatay açısına kilitlenir
+            bg.CFrame = cam.CFrame
         end
         
-        -- KAPATINCA BURASI ÇALIŞIR
+        -- SIFIRLAMA
         bv:Destroy()
         bg:Destroy()
         if hum then
             hum.PlatformStand = false
-            hum:ChangeState(Enum.HumanoidStateType.GettingUp) -- Karakteri ayağa diker ve düşmesini sağlar
+            hum:ChangeState(Enum.HumanoidStateType.GettingUp)
         end
     end)
 end
 
--- MENÜ BUTONLARI
+-- MENÜ ELEMANLARI
 local List = Instance.new("ScrollingFrame", MainFrame)
 List.Size = UDim2.new(1, 0, 0.75, 0); List.Position = UDim2.new(0, 0, 0.22, 0); List.BackgroundTransparency = 1; List.ScrollBarThickness = 0
 Instance.new("UIListLayout", List).HorizontalAlignment = "Center"
