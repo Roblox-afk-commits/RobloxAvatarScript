@@ -1,4 +1,4 @@
--- SMX FLY HUB V1 (HIZ SORUNU ÇÖZÜLDÜ)
+-- SMX FLY HUB V1 (ÖZGÜR UÇUŞ + HIZ KONTROLÜ)
 local lp = game.Players.LocalPlayer
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 local runService = game:GetService("RunService")
@@ -6,7 +6,7 @@ local runService = game:GetService("RunService")
 -- DEĞİŞKENLER
 local flying = false
 local speedLevel = 1
-local speeds = {25, 45, 75, 110, 160, 220, 290, 380, 500, 750} -- Hızlar daha belirgin yapıldı
+local speeds = {20, 35, 50, 70, 90, 110, 130, 155, 185, 220}
 
 -- ANA MENÜ TASARIMI
 local MainFrame = Instance.new("Frame", ScreenGui)
@@ -14,7 +14,7 @@ local Gradient = Instance.new("UIGradient", MainFrame)
 local Stroke = Instance.new("UIStroke", MainFrame)
 local Corner = Instance.new("UICorner", MainFrame)
 
-MainFrame.Size = UDim2.new(0, 200, 0, 240)
+MainFrame.Size = UDim2.new(0, 200, 0, 260)
 MainFrame.Position = UDim2.new(0.5, -100, 0.4, 0)
 MainFrame.BackgroundColor3 = Color3.new(1, 1, 1)
 MainFrame.Active = true
@@ -47,7 +47,7 @@ OpenCorner.CornerRadius = UDim.new(0, 10)
 OpenStroke.Thickness = 2
 OpenGradient.Color = Gradient.Color
 
--- FLY SİSTEMİ (HIZ ANLIK GÜNCELLENİR)
+-- FLY SİSTEMİ (ÖZGÜR UÇUŞ)
 local function startFly()
     local char = lp.Character or lp.CharacterAdded:Wait()
     local hrp = char:WaitForChild("HumanoidRootPart")
@@ -62,17 +62,15 @@ local function startFly()
             runService.RenderStepped:Wait()
             if char:FindFirstChild("Humanoid") then
                 char.Humanoid.PlatformStand = true
-                
                 local cam = workspace.CurrentCamera.CFrame
                 local moveDir = char.Humanoid.MoveDirection 
                 
-                -- BURASI ÖNEMLİ: Hız her karede speeds[speedLevel] üzerinden okunur
                 if moveDir.Magnitude > 0 then
-                    bv.Velocity = moveDir * speeds[speedLevel]
+                    -- ÖZGÜR UÇUŞ: Kameranın baktığı yöne doğru itiş gücü verir
+                    bv.Velocity = cam.VectorToWorldSpace(Vector3.new(moveDir.X * speeds[speedLevel], (moveDir.Z * -1) * cam.LookVector.Y * speeds[speedLevel], moveDir.Z * speeds[speedLevel]))
                 else
                     bv.Velocity = Vector3.new(0, 0, 0)
                 end
-                
                 bg.CFrame = cam
             end
         end
@@ -84,13 +82,15 @@ local function startFly()
     end)
 end
 
--- MENÜ BUTONLARI
+-- MENÜ BUTONLARI YAPISI
 local List = Instance.new("ScrollingFrame", MainFrame)
 List.Size = UDim2.new(1, 0, 0.75, 0)
 List.Position = UDim2.new(0, 0, 0.22, 0)
 List.BackgroundTransparency = 1
 List.ScrollBarThickness = 0
-Instance.new("UIListLayout", List).HorizontalAlignment = "Center"
+local UIList = Instance.new("UIListLayout", List)
+UIList.HorizontalAlignment = "Center"
+UIList.Padding = UDim.new(0, 8)
 
 local function createMenuBtn(txt, func)
     local b = Instance.new("TextButton", List)
@@ -104,6 +104,7 @@ local function createMenuBtn(txt, func)
     return b
 end
 
+-- FLY AKTİF ETME
 createMenuBtn("FLY: KAPALI", function(b)
     flying = not flying
     if flying then
@@ -116,12 +117,37 @@ createMenuBtn("FLY: KAPALI", function(b)
     end
 end)
 
-local speedBtn = createMenuBtn("HIZ: Seviye 1", function(b)
-    speedLevel = speedLevel + 1
-    if speedLevel > 10 then speedLevel = 1 end
-    b.Text = "HIZ: Seviye " .. speedLevel
-end)
+-- HIZ KONTROL PANELİ (+ ve -)
+local SpeedFrame = Instance.new("Frame", List)
+SpeedFrame.Size = UDim2.new(0.85, 0, 0, 40)
+SpeedFrame.BackgroundTransparency = 1
 
+local speedLabel = Instance.new("TextLabel", SpeedFrame)
+speedLabel.Size = UDim2.new(0.4, 0, 1, 0)
+speedLabel.Position = UDim2.new(0.3, 0, 0, 0)
+speedLabel.Text = "HIZ: " .. speedLevel
+speedLabel.TextColor3 = Color3.new(1,1,1)
+speedLabel.BackgroundTransparency = 1
+speedLabel.Font = "GothamBold"
+
+local function createAdjustBtn(txt, pos, val)
+    local b = Instance.new("TextButton", SpeedFrame)
+    b.Size = UDim2.new(0.25, 0, 0.8, 0)
+    b.Position = pos
+    b.Text = txt
+    b.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    b.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner", b)
+    b.MouseButton1Click:Connect(function()
+        speedLevel = math.clamp(speedLevel + val, 1, 10)
+        speedLabel.Text = "HIZ: " .. speedLevel
+    end)
+end
+
+createAdjustBtn("-", UDim2.new(0,0,0.1,0), -1)
+createAdjustBtn("+", UDim2.new(0.75,0,0.1,0), 1)
+
+-- KAPATMA/SİLME
 createMenuBtn("MENÜYÜ KAPAT", function()
     MainFrame.Visible = false
     OpenBtn.Visible = true
