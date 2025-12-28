@@ -1,4 +1,4 @@
--- SMX FLY HUB V1 (JOYSTICK ODAKLI - KUSURSUZ)
+-- SMX FLY HUB V1 (DİKEY KONTROL %100 FİX)
 local lp = game.Players.LocalPlayer
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 local runService = game:GetService("RunService")
@@ -7,37 +7,32 @@ local flying = false
 local speedLevel = 1
 local speeds = {30, 50, 80, 115, 160, 210, 270, 340, 420, 550}
 
--- PANEL TASARIMI (SABİT MOR)
+-- PANEL (SABİT MOR)
 local MainFrame = Instance.new("Frame", ScreenGui)
 local Gradient = Instance.new("UIGradient", MainFrame)
 local Stroke = Instance.new("UIStroke", MainFrame)
 MainFrame.Size = UDim2.new(0, 200, 0, 280)
 MainFrame.Position = UDim2.new(0.5, -100, 0.4, 0)
 MainFrame.BackgroundColor3 = Color3.new(1, 1, 1)
-MainFrame.Active = true
-MainFrame.Draggable = true
+MainFrame.Active = true; MainFrame.Draggable = true
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 15)
-Stroke.Thickness = 3
-Stroke.ApplyStrokeMode = "Border"
+Stroke.Thickness = 3; Stroke.ApplyStrokeMode = "Border"
 Gradient.Color = ColorSequence.new{
     ColorSequenceKeypoint.new(0, Color3.new(0, 0, 0)),
     ColorSequenceKeypoint.new(0.5, Color3.fromRGB(85, 0, 127)),
     ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0))
 }
 
--- AÇ BUTONU (SADECE "AÇ")
+-- BUTON (SADECE "AÇ")
 local OpenBtn = Instance.new("TextButton", ScreenGui)
 local OpenStroke = Instance.new("UIStroke", OpenBtn)
 local OpenGradient = Instance.new("UIGradient", OpenBtn)
-OpenBtn.Size = UDim2.new(0, 80, 0, 40)
-OpenBtn.Position = UDim2.new(0, 15, 0.5, -20)
-OpenBtn.Text = "AÇ"
-OpenBtn.TextColor3 = Color3.new(1, 1, 1); OpenBtn.Font = "GothamBold"; OpenBtn.BackgroundColor3 = Color3.new(1, 1, 1); OpenBtn.Visible = false 
+OpenBtn.Size = UDim2.new(0, 80, 0, 40); OpenBtn.Position = UDim2.new(0, 15, 0.5, -20)
+OpenBtn.Text = "AÇ"; OpenBtn.TextColor3 = Color3.new(1, 1, 1); OpenBtn.Font = "GothamBold"; OpenBtn.BackgroundColor3 = Color3.new(1, 1, 1); OpenBtn.Visible = false 
 Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(0, 10)
-OpenStroke.Thickness = 2
-OpenGradient.Color = Gradient.Color
+OpenStroke.Thickness = 2; OpenGradient.Color = Gradient.Color
 
--- GERÇEK JOYSTICK FLY MOTORU
+-- TAM KONTROLLÜ FLY MOTORU
 local function startFly()
     local char = lp.Character or lp.CharacterAdded:Wait()
     local hrp = char:WaitForChild("HumanoidRootPart")
@@ -53,23 +48,20 @@ local function startFly()
             runService.RenderStepped:Wait()
             hum.PlatformStand = true
             local cam = workspace.CurrentCamera
-            
-            -- ROBLOX JOYSTICK YÖNÜNÜ AL
             local moveDir = hum.MoveDirection
             
             if moveDir.Magnitude > 0 then
-                -- EĞER İLERİ GİDİYORSAK KAMERANIN DİKEY AÇISINI DA HESABA KAT
-                local direction = moveDir
+                -- BURASI KRİTİK: Kameranın baktığı tam yöne (X, Y, Z) joystick gücü uygula
+                -- moveDir.Z -1 ise ileri gidiyoruz demektir, kameranın LookVector'ını tam kullanır
+                local forwardVel = cam.CFrame.LookVector * (moveDir.Z * -1)
+                local rightVel = cam.CFrame.RightVector * moveDir.X
                 
-                -- Karakterin ileri/geri gitme durumuna göre dikey hızı ayarla (Aşağı-Yukarı bakış)
-                local flyDir = Vector3.new(direction.X, cam.CFrame.LookVector.Y * (math.abs(moveDir.Z) > 0.1 and -moveDir.Z or 0), direction.Z)
-                
-                bv.Velocity = flyDir.Unit * speeds[speedLevel]
+                bv.Velocity = (forwardVel + rightVel).Unit * speeds[speedLevel]
             else
                 bv.Velocity = Vector3.new(0, 0, 0)
             end
             
-            -- Karakter kameranın baktığı yöne kilitlenir
+            -- Dönüş kameraya kilitli (Sert dönüş)
             bg.CFrame = cam.CFrame
         end
         bv:Destroy(); bg:Destroy()
@@ -77,7 +69,7 @@ local function startFly()
     end)
 end
 
--- BUTONLAR
+-- LİSTE VE MENÜ
 local List = Instance.new("ScrollingFrame", MainFrame)
 List.Size = UDim2.new(1, 0, 0.8, 0); List.Position = UDim2.new(0, 0, 0.18, 0); List.BackgroundTransparency = 1; List.ScrollBarThickness = 0
 Instance.new("UIListLayout", List).HorizontalAlignment = "Center"
