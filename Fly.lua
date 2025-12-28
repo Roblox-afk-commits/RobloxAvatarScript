@@ -117,7 +117,7 @@ createMenuBtn("SCRİPTİ SİL", function() ScreenGui:Destroy() end) -- Silme yaz
 OpenBtn.MouseButton1Click:Connect(function() MainFrame.Visible = true; OpenBtn.Visible = false end)
 
 local Title = Instance.new("TextLabel", MainFrame)
-Title.Size = UDim2.new(1, 0, 0.15, 0); Title.Text = "GAVATHUB FLY V1"; Title.TextColor3 = Color3.new(1, 1, 1); Title.Font = "GothamBold"; Title.BackgroundTransparency = 1
+Title.Size = UDim2.new(1, 0, 0.15, 0); Title.Text = "SMX FLY HUBV1"; Title.TextColor3 = Color3.new(1, 1, 1); Title.Font = "GothamBold"; Title.BackgroundTransparency = 1
 
 -- GÖKKUŞAĞI KENARLIK VE ANİMASYON
 task.spawn(function()
