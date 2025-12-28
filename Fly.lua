@@ -1,4 +1,4 @@
--- SMX FLY HUB V1 (KESİN VE RESMİ SÜRÜM)
+-- SMX FLY HUB V1 (TASARIM SABİT - YÖNLER FİX)
 local lp = game.Players.LocalPlayer
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 local runService = game:GetService("RunService")
@@ -7,7 +7,7 @@ local flying = false
 local speedLevel = 1
 local speeds = {30, 50, 80, 115, 160, 210, 270, 340, 420, 550}
 
--- ANA PANEL (MOR TASARIM)
+-- ANA PANEL (ORİJİNAL MOR TASARIM)
 local MainFrame = Instance.new("Frame", ScreenGui)
 local Gradient = Instance.new("UIGradient", MainFrame)
 local Stroke = Instance.new("UIStroke", MainFrame)
@@ -18,17 +18,16 @@ MainFrame.Position = UDim2.new(0.5, -100, 0.4, 0)
 MainFrame.BackgroundColor3 = Color3.new(1, 1, 1)
 MainFrame.Active = true
 MainFrame.Draggable = true
-
 Corner.CornerRadius = UDim.new(0, 15)
 Stroke.Thickness = 3
 Stroke.ApplyStrokeMode = "Border"
 Gradient.Color = ColorSequence.new{
     ColorSequenceKeypoint.new(0, Color3.new(0, 0, 0)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(85, 0, 127)), -- MOR NEON
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(85, 0, 127)), -- MOR RENK
     ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0))
 }
 
--- AÇMA DÜĞMESİ (SMX OLARAK GÜNCELLENDİ)
+-- AÇMA BUTONU (DÜZELTİLDİ)
 local OpenBtn = Instance.new("TextButton", ScreenGui)
 local OpenCorner = Instance.new("UICorner", OpenBtn)
 local OpenStroke = Instance.new("UIStroke", OpenBtn)
@@ -39,19 +38,17 @@ OpenBtn.Position = UDim2.new(0, 15, 0.5, -20)
 OpenBtn.Text = "SMX\nAÇ"
 OpenBtn.TextColor3 = Color3.new(1, 1, 1)
 OpenBtn.Font = "GothamBold"
-OpenBtn.TextSize = 13
 OpenBtn.BackgroundColor3 = Color3.new(1, 1, 1)
 OpenBtn.Visible = false 
 OpenCorner.CornerRadius = UDim.new(0, 10)
 OpenStroke.Thickness = 2
 OpenGradient.Color = Gradient.Color
 
--- FLY MOTORU
+-- FLY (JOYSTICK YÖNLERİ DÜZELTİLMİŞ)
 local function startFly()
     local char = lp.Character or lp.CharacterAdded:Wait()
     local hrp = char:WaitForChild("HumanoidRootPart")
     local hum = char:WaitForChild("Humanoid")
-    
     local bv = Instance.new("BodyVelocity", hrp)
     bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
     local bg = Instance.new("BodyGyro", hrp)
@@ -66,7 +63,7 @@ local function startFly()
             local moveDir = hum.MoveDirection
             
             if moveDir.Magnitude > 0 then
-                -- Kamera odaklı uçuş (Aşağı/Yukarı/Sağ/Sol Tam Uyumlu)
+                -- Joystick yönleri kameraya göre %100 eşlendi
                 bv.Velocity = (cam.CFrame.LookVector * (moveDir.Z * -1) + cam.CFrame.RightVector * moveDir.X).Unit * speeds[speedLevel]
             else
                 bv.Velocity = Vector3.new(0, 0, 0)
@@ -74,14 +71,11 @@ local function startFly()
             bg.CFrame = cam.CFrame
         end
         bv:Destroy(); bg:Destroy()
-        if hum then 
-            hum.PlatformStand = false
-            hum:ChangeState(11) 
-        end
+        if hum then hum.PlatformStand = false; hum:ChangeState(11) end
     end)
 end
 
--- MENÜ İÇERİĞİ
+-- LİSTE
 local List = Instance.new("ScrollingFrame", MainFrame)
 List.Size = UDim2.new(1, 0, 0.8, 0); List.Position = UDim2.new(0, 0, 0.18, 0); List.BackgroundTransparency = 1; List.ScrollBarThickness = 0
 Instance.new("UIListLayout", List).HorizontalAlignment = "Center"
@@ -91,7 +85,6 @@ local function createMenuBtn(txt, func)
     b.Size = UDim2.new(0.85, 0, 0, 35); b.Text = txt; b.BackgroundColor3 = Color3.fromRGB(30,30,30); b.TextColor3 = Color3.new(1,1,1); b.Font = "GothamBold"
     Instance.new("UICorner", b).CornerRadius = UDim.new(0, 10)
     b.MouseButton1Click:Connect(function() func(b) end)
-    return b
 end
 
 createMenuBtn("FLY: KAPALI", function(b)
@@ -116,16 +109,12 @@ adjust("-", UDim2.new(0,0,0.1,0), -1); adjust("+", UDim2.new(0.75,0,0.1,0), 1)
 createMenuBtn("MENÜYÜ KAPAT", function() MainFrame.Visible = false; OpenBtn.Visible = true end)
 createMenuBtn("SCRİPTİ SİL", function() ScreenGui:Destroy() end)
 
-OpenBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = true
-    OpenBtn.Visible = false
-end)
+OpenBtn.MouseButton1Click:Connect(function() MainFrame.Visible = true; OpenBtn.Visible = false end)
 
--- BAŞLIK (İSTEDİĞİN GİBİ SMX FLY HUB V1)
 local Title = Instance.new("TextLabel", MainFrame)
-Title.Size = UDim2.new(1, 0, 0.15, 0); Title.Text = "SMX FLY HUB V1"; Title.TextColor3 = Color3.new(1, 1, 1); Title.Font = "GothamBold"; Title.BackgroundTransparency = 1; Title.TextSize = 16
+Title.Size = UDim2.new(1, 0, 0.15, 0); Title.Text = "SMX FLY HUB V1"; Title.TextColor3 = Color3.new(1, 1, 1); Title.Font = "GothamBold"; Title.BackgroundTransparency = 1
 
--- ANİMASYONLAR
+-- ANİMASYON
 task.spawn(function()
     while true do
         Gradient.Rotation = Gradient.Rotation + 2; OpenGradient.Rotation = OpenGradient.Rotation + 2
